@@ -42,3 +42,8 @@ places to ask questions about the Go language.
 
 [rf]: https://reneefrench.blogspot.com/
 [cc3-by]: https://creativecommons.org/licenses/by/3.0/
+
+
+# About this project
+
+本项目为个人学习go源码的笔记，大部分会的源码我会标记中文注释。
