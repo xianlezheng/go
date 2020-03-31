@@ -1,3 +1,18 @@
+/*
+*	go语言中的数据类型的定义，以及类型的范围：
+*   总结：
+*	1、基础的数据类型包含（范围可以参见下面的定义说明）：
+*		布尔值：bool,
+*		无符号整数：uint8,uint16,uint32,uint64
+*		有符号整数：int8,int16,int32,int64
+*		浮点数：float32,float64
+*		复数：complex64，complex128
+		字符串：string
+		无长度整型：int,uint（随平台架构，一般为int32和uint32）
+	2、指针
+		uintptr
+
+*/
 // Copyright 2011 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -52,6 +67,9 @@ type int32 int32
 type int64 int64
 
 // float32 is the set of all IEEE-754 32-bit floating-point numbers.
+/*
+	关于浮点的介绍和IEEE-754标准介绍参考：https://en.wikipedia.org/wiki/Single-precision_floating-point_format
+*/
 type float32 float32
 
 // float64 is the set of all IEEE-754 64-bit floating-point numbers.
@@ -59,50 +77,91 @@ type float64 float64
 
 // complex64 is the set of all complex numbers with float32 real and
 // imaginary parts.
+/*
+	复数complex64是以float32实现的
+*/
 type complex64 complex64
 
 // complex128 is the set of all complex numbers with float64 real and
 // imaginary parts.
+/*
+	复数complex128是以float64实现的
+*/
 type complex128 complex128
 
 // string is the set of all strings of 8-bit bytes, conventionally but not
 // necessarily representing UTF-8-encoded text. A string may be empty, but
 // not nil. Values of string type are immutable.
+/*
+	长度说明：字符串类型每个字符占用8位也就是1个字节，但是中文，也就是utf-8中一个字符是占用三个字节的。
+	存储值：字符串可能为空，但是不可能是nil
+*/
 type string string
 
 // int is a signed integer type that is at least 32 bits in size. It is a
 // distinct type, however, and not an alias for, say, int32.
+/*
+	int是一个有符号的数值，跟随平台大小走，最小为int32位
+*/
 type int int
 
 // uint is an unsigned integer type that is at least 32 bits in size. It is a
 // distinct type, however, and not an alias for, say, uint32.
+/*
+	uint是一个无符号的int类型，最小位uint32位，64位机器是uint64
+*/
 type uint uint
 
 // uintptr is an integer type that is large enough to hold the bit pattern of
 // any pointer.
+/*
+	指针类型，只能存储指针，通常与unsafe.Pointer配合使用。
+*/
 type uintptr uintptr
 
 // byte is an alias for uint8 and is equivalent to uint8 in all ways. It is
 // used, by convention, to distinguish byte values from 8-bit unsigned
 // integer values.
+/*
+	uint8的别名，范围为：0～255
+*/
 type byte = uint8
 
 // rune is an alias for int32 and is equivalent to int32 in all ways. It is
 // used, by convention, to distinguish character values from integer values.
+/*
+	int32的别名，用于区分数字和字符
+*/
 type rune = int32
 
 // iota is a predeclared identifier representing the untyped integer ordinal
 // number of the current const specification in a (usually parenthesized)
 // const declaration. It is zero-indexed.
+/*
+	自增长初始化变量
+const (
+	Zero = iota		// 0
+	One				// 1
+	Two				// 2
+)
+*/
 const iota = 0 // Untyped int.
 
 // nil is a predeclared identifier representing the zero value for a
 // pointer, channel, func, interface, map, or slice type.
+
+/**
+nil可以表示的类型有：pointer，channel，func,interface,map,slice
+表示着这些类型的值是空值。可以理解为其他语言的null空指针类型。
+*/
 var nil Type // Type must be a pointer, channel, func, interface, map, or slice type
 
 // Type is here for the purposes of documentation only. It is a stand-in
 // for any Go type, but represents the same type for any given function
 // invocation.
+/*
+	定义类型的数据类型，可以是任意go语言类型。
+*/
 type Type int
 
 // Type1 is here for the purposes of documentation only. It is a stand-in
@@ -131,6 +190,14 @@ type ComplexType complex64
 //	slice = append(slice, anotherSlice...)
 // As a special case, it is legal to append a string to a byte slice, like this:
 //	slice = append([]byte("hello "), "world"...)
+/*
+	这个非常常用，可以熟练的掌握，可以往一个数组中追加元素或者数组
+	eg：
+	1、追加元素：slice = append(slice,data1,data2,...dataN)
+       其中slice是要被追加的数组，data1，data2是被追加的数据
+	2、追加数组：slice = append(slice,arrToBeAppended...)
+       arrToBeAppended是要追加到slice的数组
+*/
 func append(slice []Type, elems ...Type) []Type
 
 // The copy built-in function copies elements from a source slice into a
@@ -143,6 +210,15 @@ func copy(dst, src []Type) int
 // The delete built-in function deletes the element with the specified key
 // (m[key]) from the map. If m is nil or there is no such element, delete
 // is a no-op.
+/*
+	mp := make(map[int]string)
+	mp[1] = "1"
+	mp[2] = "2"
+
+	delete(mp,2)
+
+	fmt.Println(mp)//[1,1]
+*/
 func delete(m map[Type]Type1, key Type)
 
 // The len built-in function returns the length of v, according to its type:
