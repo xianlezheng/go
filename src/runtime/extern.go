@@ -240,4 +240,7 @@ const GOOS string = sys.GOOS
 
 // GOARCH is the running program's architecture target:
 // one of 386, amd64, arm, s390x, and so on.
+/*
+	当前运行的环境可以看下，runtime\internal\sys目录下的CPU架构体系
+*/
 const GOARCH string = sys.GOARCH

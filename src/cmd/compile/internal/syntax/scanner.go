@@ -27,12 +27,15 @@ const (
 	directives                  // call handler for directives only
 )
 
+/**
+go语言的词法解析
+*/
 type scanner struct {
-	source
-	mode   uint
+	source      // 源文件
+	mode   uint // 启用模式：控制scanner的行为，包括：comments和directives两种模式
 	nlsemi bool // if set '\n' and EOF translate to ';'
 
-	// current token, valid after calling next()
+	// current token, valid after calling next() 当前被扫描的token（在调用next后有效）
 	line, col uint
 	tok       token
 	lit       string   // valid if tok is _Name, _Literal, or _Semi ("semicolon", "newline", or "EOF"); may be malformed if bad is true
@@ -92,7 +95,7 @@ func (s *scanner) next() {
 	s.nlsemi = false
 
 redo:
-	// skip white space
+	// skip white space 跳过空行、换行
 	s.stop()
 	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' && !nlsemi || s.ch == '\r' {
 		s.nextch()
@@ -107,6 +110,7 @@ redo:
 		return
 	}
 
+	// 对应每个ch需要进行不同的case判断，用nextch取下一个字符
 	switch s.ch {
 	case -1:
 		if nlsemi {
@@ -443,6 +447,7 @@ func isHex(ch rune) bool     { return '0' <= ch && ch <= '9' || 'a' <= lower(ch)
 func (s *scanner) digits(base int, invalid *int) (digsep int) {
 	if base <= 10 {
 		max := rune('0' + base)
+		// 十进制一下数字读取，读到不是数字为止
 		for isDecimal(s.ch) || s.ch == '_' {
 			ds := 1
 			if s.ch == '_' {
@@ -455,6 +460,7 @@ func (s *scanner) digits(base int, invalid *int) (digsep int) {
 			s.nextch()
 		}
 	} else {
+		// 16进制的读取
 		for isHex(s.ch) || s.ch == '_' {
 			ds := 1
 			if s.ch == '_' {
@@ -467,6 +473,9 @@ func (s *scanner) digits(base int, invalid *int) (digsep int) {
 	return
 }
 
+/**
+数字转换
+*/
 func (s *scanner) number(seenPoint bool) {
 	ok := true
 	kind := IntLit
@@ -475,7 +484,7 @@ func (s *scanner) number(seenPoint bool) {
 	digsep := 0       // bit 0: digit present, bit 1: '_' present
 	invalid := -1     // index of invalid digit in literal, or < 0
 
-	// integer part
+	// integer part 整数部分
 	if !seenPoint {
 		if s.ch == '0' {
 			s.nextch()
@@ -505,7 +514,7 @@ func (s *scanner) number(seenPoint bool) {
 		}
 	}
 
-	// fractional part
+	// fractional part 小数部分
 	if seenPoint {
 		kind = FloatLit
 		digsep |= s.digits(base, &invalid)
@@ -516,7 +525,7 @@ func (s *scanner) number(seenPoint bool) {
 		ok = false
 	}
 
-	// exponent
+	// exponent 指数部分
 	if e := lower(s.ch); e == 'e' || e == 'p' {
 		if ok {
 			switch {
@@ -543,7 +552,7 @@ func (s *scanner) number(seenPoint bool) {
 		ok = false
 	}
 
-	// suffix 'i'
+	// suffix 'i' 复数部分
 	if s.ch == 'i' {
 		kind = ImagLit
 		s.nextch()

@@ -356,6 +356,7 @@ func compileFunctions() {
 		var wg sync.WaitGroup
 		Ctxt.InParallel = true
 		c := make(chan *Node, nBackendWorkers)
+		// 并发编译，工开启nBackendWorkers个工作线程
 		for i := 0; i < nBackendWorkers; i++ {
 			wg.Add(1)
 			go func(worker int) {

@@ -6,7 +6,7 @@ package types
 
 import "sort"
 
-// A Type represents a type of Go.
+// a type represents a type of go.
 // All types implement the Type interface.
 type Type interface {
 	// Underlying returns the underlying type of a type.

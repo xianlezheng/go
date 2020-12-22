@@ -347,7 +347,9 @@ func (p *parser) print(msg string) {
 //
 // Excluding methods returning slices, parse methods named xOrNil may return
 // nil; all others are expected to return a valid non-nil node.
-
+/**
+语法分析（输入是词法分析产生的tok）
+*/
 // SourceFile = PackageClause ";" { ImportDecl ";" } { TopLevelDecl ";" } .
 func (p *parser) fileOrNil() *File {
 	if trace {

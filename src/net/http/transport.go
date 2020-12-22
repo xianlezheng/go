@@ -118,6 +118,9 @@ type Transport struct {
 	// "http" is assumed.
 	//
 	// If Proxy is nil or returns a nil *URL, no proxy is used.
+	// Proxy指定用于针对特定请求返回代理的函数。
+	// 如果该函数返回一个非空的错误，请求将终止并返回该错误。
+	// 如果Proxy为空或者返回一个空的URL指针，将不使用代理
 	Proxy func(*Request) (*url.URL, error)
 
 	// DialContext specifies the dial function for creating unencrypted TCP connections.
@@ -140,6 +143,8 @@ type Transport struct {
 	// Deprecated: Use DialContext instead, which allows the transport
 	// to cancel dials as soon as they are no longer needed.
 	// If both are set, DialContext takes priority.
+	// Dial指定用于创建TCP连接的dail()函数。
+	// 如果Dial为空，将默认使用net.Dial()函数
 	Dial func(network, addr string) (net.Conn, error)
 
 	// DialTLSContext specifies an optional dial function for creating
@@ -166,6 +171,9 @@ type Transport struct {
 	// tls.Client.
 	// If nil, the default configuration is used.
 	// If non-nil, HTTP/2 support may not be enabled by default.
+
+	// TLSClientConfig指定用于tls.Client的TLS配置。
+	// 如果为空则使用默认配置
 	TLSClientConfig *tls.Config
 
 	// TLSHandshakeTimeout specifies the maximum amount of time waiting to
@@ -191,11 +199,16 @@ type Transport struct {
 
 	// MaxIdleConns controls the maximum number of idle (keep-alive)
 	// connections across all hosts. Zero means no limit.
+
+	// MaxIdleConns控制所有主机之间的最大空闲（保持活动）连接数。零表示无限制.
 	MaxIdleConns int
 
 	// MaxIdleConnsPerHost, if non-zero, controls the maximum idle
 	// (keep-alive) connections to keep per-host. If zero,
 	// DefaultMaxIdleConnsPerHost is used.
+
+	// 如果MaxIdleConnsPerHost为非零值，它用于控制每个host所需要
+	// 保持的最大空闲连接数。如果该值为空，则使用DefaultMaxIdleConnsPerHost
 	MaxIdleConnsPerHost int
 
 	// MaxConnsPerHost optionally limits the total number of

@@ -623,6 +623,7 @@ func (f *Func) setWBPos(pos src.XPos) {
 type Op uint8
 
 // Node ops.
+// 节点定义枚举
 const (
 	OXXX Op = iota
 

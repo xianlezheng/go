@@ -56,6 +56,7 @@ func SetCPUProfileRate(hz int) {
 	if hz < 0 {
 		hz = 0
 	}
+	// 采样频率不能超过1Mhz，只允许每1微妙采集一次
 	if hz > 1000000 {
 		hz = 1000000
 	}

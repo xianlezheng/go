@@ -126,7 +126,9 @@ func osinit() {
 	// pthread_create delayed until end of goenvs so that we
 	// can look at the environment first.
 
+	// 获取cpu核数
 	ncpu = getncpu()
+	// 获取页大小
 	physPageSize = getPageSize()
 }
 
@@ -393,6 +395,9 @@ func sigdelset(mask *sigset, i int) {
 //go:linkname executablePath os.executablePath
 var executablePath string
 
+/*
+	参数处理（runtime1.go#args）
+*/
 func sysargs(argc int32, argv **byte) {
 	// skip over argv, envv and the first string will be the path
 	n := argc + 1

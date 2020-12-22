@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// TODO:bytes.buffer 源码
 package bytes
 
 // Simple byte buffer for marshaling data.
@@ -18,8 +19,10 @@ const smallBufferSize = 64
 // A Buffer is a variable-sized buffer of bytes with Read and Write methods.
 // The zero value for Buffer is an empty buffer ready to use.
 type Buffer struct {
-	buf      []byte // contents are the bytes buf[off : len(buf)]
-	off      int    // read at &buf[off], write at &buf[len(buf)]
+	buf []byte // contents are the bytes buf[off : len(buf)]
+	// 计已经读取缓存得数量
+	off int // read at &buf[off], write at &buf[len(buf)]
+	// 上一次读取的内容的长度，用于回退操作减去长度使用(b.off -= int(b.lastRead))
 	lastRead readOp // last read operation, so that Unread* can work correctly.
 }
 
@@ -51,6 +54,11 @@ const maxInt = int(^uint(0) >> 1)
 // only until the next call to a method like Read, Write, Reset, or Truncate).
 // The slice aliases the buffer content at least until the next buffer modification,
 // so immediate changes to the slice will affect the result of future reads.
+/***
+返回剩余未读的内容
+返回切片的
+*/
+
 func (b *Buffer) Bytes() []byte { return b.buf[b.off:] }
 
 // String returns the contents of the unread portion of the buffer
@@ -70,6 +78,7 @@ func (b *Buffer) empty() bool { return len(b.buf) <= b.off }
 
 // Len returns the number of bytes of the unread portion of the buffer;
 // b.Len() == len(b.Bytes()).
+// 返回未读部分的长度
 func (b *Buffer) Len() int { return len(b.buf) - b.off }
 
 // Cap returns the capacity of the buffer's underlying byte slice, that is, the
@@ -144,6 +153,7 @@ func (b *Buffer) grow(n int) int {
 		b.buf = buf
 	}
 	// Restore b.off and len(b.buf).
+	// 重置已读计数，并对内容容器做切片操作，以掩盖掉原有的已读内容
 	b.off = 0
 	b.buf = b.buf[:m+n]
 	return m
@@ -303,6 +313,7 @@ func (b *Buffer) Read(p []byte) (n int, err error) {
 		}
 		return 0, io.EOF
 	}
+	// 读取内容时，相应方法会依据已读计数找到未读部分，并在读取后更新计数
 	n = copy(p, b.buf[b.off:])
 	b.off += n
 	if n > 0 {
@@ -371,7 +382,9 @@ func (b *Buffer) ReadRune() (r rune, size int, err error) {
 // not a successful ReadRune, UnreadRune returns an error.  (In this regard
 // it is stricter than UnreadByte, which will unread the last byte
 // from any read operation.)
+// 回退一个Unicode字符
 func (b *Buffer) UnreadRune() error {
+	// 已读的减去上一次被读取内容末尾的字符的长度
 	if b.lastRead <= opInvalid {
 		return errors.New("bytes.Buffer: UnreadRune: previous operation was not a successful ReadRune")
 	}
@@ -388,12 +401,14 @@ var errUnreadByte = errors.New("bytes.Buffer: UnreadByte: previous operation was
 // read operation that read at least one byte. If a write has happened since
 // the last read, if the last read returned an error, or if the read read zero
 // bytes, UnreadByte returns an error.
+// 回退一个字节
 func (b *Buffer) UnreadByte() error {
 	if b.lastRead == opInvalid {
 		return errUnreadByte
 	}
 	b.lastRead = opInvalid
 	if b.off > 0 {
+		// 已读减去1
 		b.off--
 	}
 	return nil

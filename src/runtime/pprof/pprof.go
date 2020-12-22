@@ -72,6 +72,7 @@
 // https://github.com/google/pprof/blob/master/doc/README.md.
 package pprof
 
+// TODO 性能分析API
 import (
 	"bufio"
 	"bytes"
@@ -736,6 +737,7 @@ func StartCPUProfile(w io.Writer) error {
 	// system, and a nice round number to make it easy to
 	// convert sample counts to seconds. Instead of requiring
 	// each client to specify the frequency, we hard code it.
+	// 默认为100hz，既可以得到足够多、足够用的概要信息，又不至于让程序运行出现停滞。
 	const hz = 100
 
 	cpu.Lock()

@@ -10,6 +10,7 @@
 // Because these interfaces and primitives wrap lower-level operations with
 // various implementations, unless otherwise informed clients should not
 // assume they are safe for parallel execution.
+// TODO: 阅读io包的源码
 package io
 
 import (
@@ -436,6 +437,9 @@ func LimitReader(r Reader, n int64) Reader { return &LimitedReader{r, n} }
 // data returned to just N bytes. Each call to Read
 // updates N to reflect the new amount remaining.
 // Read returns EOF when N <= 0 or when the underlying R returns EOF.
+/**
+限制读取的数量
+*/
 type LimitedReader struct {
 	R Reader // underlying reader
 	N int64  // max bytes remaining

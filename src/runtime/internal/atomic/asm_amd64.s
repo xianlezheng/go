@@ -14,13 +14,30 @@
 //		return 1;
 //	} else
 //		return 0;
-TEXT runtime∕internal∕atomic·Cas(SB),NOSPLIT,$0-17
-	MOVQ	ptr+0(FP), BX
-	MOVL	old+8(FP), AX
-	MOVL	new+12(FP), CX
+TEXT runtime∕internal∕atomic·Cas(SB),NOSPLIT,$0-17 // 17 = sizeof(*uint32「8」 + sizeof(uint32)「4」 + sizeof(uint32)「4」 + sizeof(uint8/bool)「1」)
+	MOVQ	ptr+0(FP), BX   // 入参：1，8字节的uint32指针
+	MOVL	old+8(FP), AX   // 入参：2，4字节的 uint32
+	MOVL	new+12(FP), CX  // 入参：2，4字节的 uint32
 	LOCK
-	CMPXCHGL	CX, 0(BX)
-	SETEQ	ret+16(FP)
+	// lock 前缀指令
+	// 在CPU的LOCK信号被声明之后，在此期随同执行的指令会转换成原子指令。
+	// 在多处理器环境中，LOCK信号确保，在此信号被声明之后，处理器独占使用任何共享内存
+	// LOCK前缀只能预加在以下指令前面，并且只能加在这些形式的指令前面,其中目标操作数是内存操作数：
+	// add、adc、and、btc、btr、bts、cmpxchg、cmpxch8b，cmpxchg16b，dec，inc，neg，not，or，sbb，sub，xor，xadd和xchg。
+
+    // ZF: 标志寄存器的一种，零标志：用于判断结果是否为0。运算结果0，ZF置1，否则置0。
+    /*
+     * CMPXCHGL r, [m]
+     * if AX == [m] {
+     *   ZF = 1;
+     *   [m] = r;
+     * } else {
+     *   ZF = 0;
+     *   AX = [m];
+     * }
+     */
+	CMPXCHGL	CX, 0(BX)   // 比较并交换指令, ZF set to 1 if success(可参考：https://blog.csdn.net/lotluck/article/details/78793468)
+	SETEQ	ret+16(FP)      // 1 if ZF set to 1
 	RET
 
 // bool	runtime∕internal∕atomic·Cas64(uint64 *val, uint64 old, uint64 new)
@@ -86,8 +103,13 @@ TEXT runtime∕internal∕atomic·Xadd(SB), NOSPLIT, $0-20
 	MOVL	delta+8(FP), AX
 	MOVL	AX, CX
 	LOCK
-	XADDL	AX, 0(BX)
-	ADDL	CX, AX
+	/*  XADDL r,[m]
+        temp = [m];
+        [m] += r;
+        r = temp;
+	*/
+	XADDL	AX, 0(BX)       // 执行加法运算
+	ADDL	CX, AX          // AX += CX
 	MOVL	AX, ret+16(FP)
 	RET
 
@@ -104,11 +126,12 @@ TEXT runtime∕internal∕atomic·Xadd64(SB), NOSPLIT, $0-24
 TEXT runtime∕internal∕atomic·Xadduintptr(SB), NOSPLIT, $0-24
 	JMP	runtime∕internal∕atomic·Xadd64(SB)
 
+// alias("sync/atomic", "SwapInt32", "runtime/internal/atomic", "Xchg", all...)
 TEXT runtime∕internal∕atomic·Xchg(SB), NOSPLIT, $0-20
 	MOVQ	ptr+0(FP), BX
 	MOVL	new+8(FP), AX
-	XCHGL	AX, 0(BX)
-	MOVL	AX, ret+16(FP)
+	XCHGL	AX, 0(BX)       // 交换指令
+	MOVL	AX, ret+16(FP)  // 交换后的 AX(old value) 写入 FP 返回值位
 	RET
 
 TEXT runtime∕internal∕atomic·Xchg64(SB), NOSPLIT, $0-24
@@ -130,7 +153,7 @@ TEXT runtime∕internal∕atomic·StorepNoWB(SB), NOSPLIT, $0-16
 TEXT runtime∕internal∕atomic·Store(SB), NOSPLIT, $0-12
 	MOVQ	ptr+0(FP), BX
 	MOVL	val+8(FP), AX
-	XCHGL	AX, 0(BX)
+	XCHGL	AX, 0(BX)   // 交换指令
 	RET
 
 TEXT runtime∕internal∕atomic·StoreRel(SB), NOSPLIT, $0-12

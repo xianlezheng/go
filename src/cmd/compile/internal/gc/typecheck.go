@@ -227,6 +227,7 @@ func typecheck(n *Node, top int) (res *Node) {
 
 	// Skip typecheck if already done.
 	// But re-typecheck ONAME/OTYPE/OLITERAL/OPACK node in case context has changed.
+	// 跳过已经处理过的，但如果是ONAME/OTYPE/OLITERAL/OPACK这几种的话，就会重新检查，以防内容变化了。
 	if n.Typecheck() == 1 {
 		switch n.Op {
 		case ONAME, OTYPE, OLITERAL, OPACK:
@@ -299,6 +300,7 @@ func typecheck(n *Node, top int) (res *Node) {
 	typecheck_tcstack = append(typecheck_tcstack, n)
 	n = typecheck1(n, top)
 
+	// 设置当前节点为已处理
 	n.SetTypecheck(1)
 
 	last := len(typecheck_tcstack) - 1
@@ -1686,12 +1688,13 @@ func typecheck1(n *Node, top int) (res *Node) {
 		}
 
 		i := 1
+		// make关键字，会判断具体的类型
 		switch t.Etype {
 		default:
 			yyerror("cannot make type %v", t)
 			n.Type = nil
 			return n
-
+			// 如果是slice类型
 		case TSLICE:
 			if i >= len(args) {
 				yyerror("missing len argument to make(%v)", t)
@@ -1725,6 +1728,7 @@ func typecheck1(n *Node, top int) (res *Node) {
 
 			n.Left = l
 			n.Right = r
+			// 替换make to makeslice
 			n.Op = OMAKESLICE
 
 		case TMAP:
@@ -1745,6 +1749,7 @@ func typecheck1(n *Node, top int) (res *Node) {
 			} else {
 				n.Left = nodintconst(0)
 			}
+			// make to makemap
 			n.Op = OMAKEMAP
 
 		case TCHAN:
@@ -1766,6 +1771,7 @@ func typecheck1(n *Node, top int) (res *Node) {
 			} else {
 				n.Left = nodintconst(0)
 			}
+			// make to makechan
 			n.Op = OMAKECHAN
 		}
 

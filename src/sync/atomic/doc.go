@@ -52,7 +52,7 @@ import (
 // alignment of 64-bit words accessed atomically. The first word in a
 // variable or in an allocated struct, array, or slice can be relied upon to be
 // 64-bit aligned.
-
+// go中只对函数进行了定义，具体实现在asm文件中
 // SwapInt32 atomically stores new into *addr and returns the previous *addr value.
 func SwapInt32(addr *int32, new int32) (old int32)
 

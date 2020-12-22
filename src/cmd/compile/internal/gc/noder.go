@@ -49,6 +49,7 @@ func parseFiles(filenames []string) uint {
 			}
 			defer f.Close()
 
+			// 词法&语法解析
 			p.file, _ = syntax.Parse(base, f, p.error, p.pragma, syntax.CheckBranches) // errors are tracked via p.error
 		}(filename)
 	}

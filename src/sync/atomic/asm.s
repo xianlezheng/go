@@ -5,9 +5,12 @@
 // +build !race
 
 #include "textflag.h"
-
+// 统一实现为JMP指令，统一跳转到runtime/internal/atomic执行
 TEXT ·SwapInt32(SB),NOSPLIT,$0
 	JMP	runtime∕internal∕atomic·Xchg(SB)
+	// src/cmd/compile/internal/gc/ssa.go 定义了
+	// alias("sync/atomic", "SwapInt32", "runtime/internal/atomic", "Xchg", all...)
+	// 所以，SwapInt32其实是runtime/internal/atomic.Xchg的别名，下面类似
 
 TEXT ·SwapUint32(SB),NOSPLIT,$0
 	JMP	runtime∕internal∕atomic·Xchg(SB)
@@ -38,6 +41,7 @@ TEXT ·CompareAndSwapUint64(SB),NOSPLIT,$0
 
 TEXT ·AddInt32(SB),NOSPLIT,$0
 	JMP	runtime∕internal∕atomic·Xadd(SB)
+// alias("sync/atomic", "AddInt32", "runtime/internal/atomic", "Xadd", all...)
 
 TEXT ·AddUint32(SB),NOSPLIT,$0
 	JMP	runtime∕internal∕atomic·Xadd(SB)
@@ -71,6 +75,7 @@ TEXT ·LoadPointer(SB),NOSPLIT,$0
 
 TEXT ·StoreInt32(SB),NOSPLIT,$0
 	JMP	runtime∕internal∕atomic·Store(SB)
+// alias("sync/atomic", "StoreInt32", "runtime/internal/atomic", "Store", all...)
 
 TEXT ·StoreUint32(SB),NOSPLIT,$0
 	JMP	runtime∕internal∕atomic·Store(SB)

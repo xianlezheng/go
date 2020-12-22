@@ -14,6 +14,13 @@ import (
 // change the current setting.
 // The number of logical CPUs on the local machine can be queried with NumCPU.
 // This call will go away when the scheduler improves.
+/*
+	设置当前cpu并行处理的能力，跟具体的cpu核数相关，但是wasm没有多线程，只有1个核可以处理。
+	1、加锁获取当前的CPU最大处理核数；
+	2、判断输入的合法性；
+	3、停止当前运行的协程，并设置新的运行核数；
+	4、启动并使用新的运行核数（startTheWorldWithSema）
+*/
 func GOMAXPROCS(n int) int {
 	if GOARCH == "wasm" && n > 1 {
 		n = 1 // WebAssembly has no threads yet, so only one CPU is possible.

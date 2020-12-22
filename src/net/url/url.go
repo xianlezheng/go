@@ -271,6 +271,9 @@ func unescape(s string, mode encoding) (string, error) {
 
 // QueryEscape escapes the string so it can be safely placed
 // inside a URL query.
+/**
+转义特殊字符，为避免对URL造成冲突（？&等字符）
+*/
 func QueryEscape(s string) string {
 	return escape(s, encodeQueryComponent)
 }

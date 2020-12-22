@@ -1001,6 +1001,10 @@ func (w waitReason) String() string {
 	return waitReasonStrings[w]
 }
 
+/*
+	gomaxprocs：最大使用CPU核数
+	newprocs:新设置的cpu核心数。
+*/
 var (
 	allglen    uintptr
 	allm       *m

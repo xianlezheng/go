@@ -59,6 +59,9 @@ type Client struct {
 	// Transport specifies the mechanism by which individual
 	// HTTP requests are made.
 	// If nil, DefaultTransport is used.
+
+	// Transport用于确定HTTP请求的创建机制。
+	// 如果为空，将会使用DefaultTransport
 	Transport RoundTripper
 
 	// CheckRedirect specifies the policy for handling redirects.
@@ -75,6 +78,13 @@ type Client struct {
 	//
 	// If CheckRedirect is nil, the Client uses its default policy,
 	// which is to stop after 10 consecutive requests.
+
+	// CheckRedirect定义重定向策略。
+	// 如果CheckRedirect不为空，客户端将在跟踪HTTP重定向前调用该函数。
+	// 两个参数req和via分别为即将发起的请求和已经发起的所有请求，最早的
+	// 已发起请求在最前面。
+	// 如果CheckRedirect返回错误，客户端将直接返回错误，不会再发起该请求。 // 如果CheckRedirect为空，Client将采用一种确认策略，将在10个连续
+	// 请求后终止
 	CheckRedirect func(req *Request, via []*Request) error
 
 	// Jar specifies the cookie jar.
@@ -86,6 +96,9 @@ type Client struct {
 	//
 	// If Jar is nil, cookies are only sent if they are explicitly
 	// set on the Request.
+
+	// 如果Jar为空，Cookie将不会在请求中发送，并会
+	// 在响应中被忽略
 	Jar CookieJar
 
 	// Timeout specifies a time limit for requests made by this
@@ -103,6 +116,12 @@ type Client struct {
 	// CancelRequest method on Transport if found. New
 	// RoundTripper implementations should use the Request's Context
 	// for cancellation instead of implementing CancelRequest.
+	// 超时指定此客户端发出的请求的时间限制。 超时包括连接时间，任何重定向和读取响应正文。
+	// 在Get，Head，Post或Do返回之后，计时器保持运行状态，并且将中断Response.Body的读取。
+	// 超时为零表示没有超时。
+	// 客户端取消对基础传输的请求，就像请求的上下文已结束一样。 为了兼容性，如果找到，
+	// 客户端还将在Transport上使用不建议使用的CancelRequest方法。
+	// 新的RoundTripper实现应使用请求的上下文进行取消，而不是实现CancelRequest。
 	Timeout time.Duration
 }
 
@@ -139,6 +158,17 @@ type RoundTripper interface {
 	// must arrange to wait for the Close call before doing so.
 	//
 	// The Request's URL and Header fields must be initialized.
+
+	// RoundTrip执行一个单一的HTTP事务，返回相应的响应信息。
+	// RoundTrip函数的实现不应试图去理解响应的内容。如果RoundTrip得到一个响应，
+	// 无论该响应的HTTP状态码如何，都应将返回的err设置为nil。非空的err
+	// 只意味着没有成功获取到响应。
+	// 类似地，RoundTrip也不应试图处理更高级别的协议，比如重定向、认证和
+	// Cookie等。
+	//
+	// RoundTrip不应修改请求内容, 除非了是为了理解Body内容。每一个请求
+	// 的URL和Header域都应被正确初始化
+
 	RoundTrip(*Request) (*Response, error)
 }
 
@@ -454,6 +484,9 @@ func Get(url string) (resp *Response, err error) {
 // Caller should close resp.Body when done reading from it.
 //
 // To make a request with custom headers, use NewRequest and Client.Do.
+/*
+	client提供的Get方法，对http进行了封装。
+*/
 func (c *Client) Get(url string) (resp *Response, err error) {
 	req, err := NewRequest("GET", url, nil)
 	if err != nil {

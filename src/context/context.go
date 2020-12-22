@@ -55,14 +55,25 @@ import (
 	"time"
 )
 
+/**
+  context 上下文（Support since go 1.7）
+   1、参考（https://blog.golang.org/context)引言部分：
+     在 Go 服务器中，每个传入的请求都在它自己的 goroutine 中处理。请求处理程序通常启动额外的 goroutine 来访问后端，如数据库和 RPC 服务。
+  处理请求的 goroutine 集通常需要访问特定于请求的值，例如最终用户的身份、授权令牌和请求的截止日期。当一个请求被取消或超时时，处理该请求的所
+  有 goroutines 应该快速退出，以便系统可以回收（reclaim）它们正在使用的任何资源。
+
+   2、简单理解，context可以协助我们实现多个goroutine之间的同步操作（可以理解：sync.WaitGroup 中Add，Wait，Done协作同步）。
+
+*/
 // A Context carries a deadline, a cancellation signal, and other values across
 // API boundaries.
 //
-// Context's methods may be called by multiple goroutines simultaneously.
+// Context's methods may be called by multiple goroutines simultaneously.（上下文的方法可以同时由多个goroutine调用。）
 type Context interface {
 	// Deadline returns the time when work done on behalf of this context
 	// should be canceled. Deadline returns ok==false when no deadline is
 	// set. Successive calls to Deadline return the same results.
+
 	Deadline() (deadline time.Time, ok bool)
 
 	// Done returns a channel that's closed when work done on behalf of this
@@ -150,6 +161,9 @@ type Context interface {
 	// 		u, ok := ctx.Value(userKey).(*User)
 	// 		return u, ok
 	// 	}
+	/**
+	用于获取对应key上存的对象的值
+	*/
 	Value(key interface{}) interface{}
 }
 
@@ -247,12 +261,13 @@ var goroutines int32
 func propagateCancel(parent Context, child canceler) {
 	done := parent.Done()
 	if done == nil {
+		// 说明父节点一定是一个emptyCtx
 		return // parent is never canceled
 	}
 
 	select {
 	case <-done:
-		// parent is already canceled
+		// parent is already canceled 判断父节点已经取消，需要将取消同步给子节点
 		child.cancel(false, parent.Err())
 		return
 	default:
@@ -262,11 +277,13 @@ func propagateCancel(parent Context, child canceler) {
 		p.mu.Lock()
 		if p.err != nil {
 			// parent has already been canceled
+			// cancel发生的时候，err一定会被赋值,说明父节点已经被赋值了
 			child.cancel(false, p.err)
 		} else {
 			if p.children == nil {
 				p.children = make(map[canceler]struct{})
 			}
+			// 把当前的cancelCtx节点追加到父节点
 			p.children[child] = struct{}{}
 		}
 		p.mu.Unlock()
@@ -275,8 +292,9 @@ func propagateCancel(parent Context, child canceler) {
 		go func() {
 			select {
 			case <-parent.Done():
+				// 父节点取消，需要将这个取消指令同步给子节点
 				child.cancel(false, parent.Err())
-			case <-child.Done():
+			case <-child.Done(): // 子节点取消的话，就不用等父节点了
 			}
 		}()
 	}
@@ -397,6 +415,7 @@ func (c *cancelCtx) cancel(removeFromParent bool, err error) {
 		c.mu.Unlock()
 		return // already canceled
 	}
+	// 执行cancel，err的值一定是有值的
 	c.err = err
 	if c.done == nil {
 		c.done = closedchan
@@ -405,6 +424,7 @@ func (c *cancelCtx) cancel(removeFromParent bool, err error) {
 	}
 	for child := range c.children {
 		// NOTE: acquiring the child's lock while holding parent's lock.
+		// 如果有子节点，子节点也都将取消（有锁的竞争）
 		child.cancel(false, err)
 	}
 	c.children = nil
@@ -424,25 +444,34 @@ func (c *cancelCtx) cancel(removeFromParent bool, err error) {
 //
 // Canceling this context releases resources associated with it, so code should
 // call cancel as soon as the operations running in this Context complete.
+/**
+*每次执行都会创建新的 timer
+*子节点的 deadline 一定不会超过父节点
+*创建过程中发现已经过期了，立刻返回
+ */
 func WithDeadline(parent Context, d time.Time) (Context, CancelFunc) {
 	if cur, ok := parent.Deadline(); ok && cur.Before(d) {
 		// The current deadline is already sooner than the new one.
+		// 如果父节点的 dealine 更靠前，那当然以父节点的为准，当前节点的 deadline 可以抛弃
 		return WithCancel(parent)
 	}
 	c := &timerCtx{
 		cancelCtx: newCancelCtx(parent),
 		deadline:  d,
 	}
+	// 向上冒泡，把当前节点的 cancel 函数关联到父 cancelCtx 节点上
 	propagateCancel(parent, c)
 	dur := time.Until(d)
 	if dur <= 0 {
+		// 已经超时了，就直接调用cancel了
 		c.cancel(true, DeadlineExceeded) // deadline has already passed
 		return c, func() { c.cancel(false, Canceled) }
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.err == nil {
+	if c.err == nil { // 说明父节点到现在还没有取消(父节点取消的话err会为Canceled)
 		c.timer = time.AfterFunc(dur, func() {
+			// 当到了定时dur时间后自动执行的函数，当前的 goroutine 不会被阻塞
 			c.cancel(true, DeadlineExceeded)
 		})
 	}
@@ -493,6 +522,9 @@ func (c *timerCtx) cancel(removeFromParent bool, err error) {
 // 		defer cancel()  // releases resources if slowOperation completes before timeout elapses
 // 		return slowOperation(ctx)
 // 	}
+/**
+设置执行的超时时间,需要尽快在处理完调用操作后调用cancel操作。
+*/
 func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc) {
 	return WithDeadline(parent, time.Now().Add(timeout))
 }
@@ -514,6 +546,7 @@ func WithValue(parent Context, key, val interface{}) Context {
 	if key == nil {
 		panic("nil key")
 	}
+	// 需要key一定要有可比较性，不能是：函数类型，字典类型，切片类型（因为这几个不支持判等）
 	if !reflectlite.TypeOf(key).Comparable() {
 		panic("key is not comparable")
 	}
@@ -547,8 +580,10 @@ func (c *valueCtx) String() string {
 }
 
 func (c *valueCtx) Value(key interface{}) interface{} {
+	// 先判断当前的节点是不是要查找的key值
 	if c.key == key {
 		return c.val
 	}
+	// 依次向上从子节点向父节点，一直查找整个ctx的根，没有找到就返回nil，在此发生递归
 	return c.Context.Value(key)
 }

@@ -209,20 +209,20 @@ ok:
 	MOVL	AX, 0(SP)
 	MOVQ	24(SP), AX		// copy argv
 	MOVQ	AX, 8(SP)
-	CALL	runtime·args(SB)
-	CALL	runtime·osinit(SB)
-	CALL	runtime·schedinit(SB)
+	CALL	runtime·args(SB)        // runtime1.go#args
+	CALL	runtime·osinit(SB)      // os_darwin.go # osinit
+	CALL	runtime·schedinit(SB)   // proc.go # schedinit
 
 	// create a new goroutine to start program
-	MOVQ	$runtime·mainPC(SB), AX		// entry
+	MOVQ	$runtime·mainPC(SB), AX		// entry，即要在 main goroutine 上运行的函数
 	PUSHQ	AX
 	PUSHQ	$0			// arg size
-	CALL	runtime·newproc(SB)
+	CALL	runtime·newproc(SB)     // proc.go # newproc
 	POPQ	AX
 	POPQ	AX
 
 	// start this M
-	CALL	runtime·mstart(SB)
+	CALL	runtime·mstart(SB)      // proc.go # mstart 程序真正的入口
 
 	CALL	runtime·abort(SB)	// mstart should never return
 	RET

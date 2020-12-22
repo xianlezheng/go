@@ -8,6 +8,8 @@ package atomic
 
 import "unsafe"
 
+// 入参：uint32指针，旧值，新值，返回：是否cas成功
+// go文件只对函数进行了定义，具体实现不用的平台具体实现的指令不一致（参见不同的：asm指令）
 //go:noescape
 func Cas(ptr *uint32, old, new uint32) bool
 

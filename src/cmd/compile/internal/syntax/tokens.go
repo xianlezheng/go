@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+/**
+定义了Go语言中支持全部的Token类型（包括：关键字，运算符，边界符，操作符优先级）
+*/
 package syntax
 
 type token uint
@@ -12,11 +15,11 @@ const (
 	_    token = iota
 	_EOF       // EOF
 
-	// names and literals
+	// names and literals 名字和文字
 	_Name    // name
 	_Literal // literal
 
-	// operators and operations
+	// operators and operations 运算符和运算
 	// _Operator is excluding '*' (_Star)
 	_Operator // op
 	_AssignOp // op=
@@ -26,7 +29,7 @@ const (
 	_Arrow    // <-
 	_Star     // *
 
-	// delimiters
+	// delimiters 边界符
 	_Lparen    // (
 	_Lbrack    // [
 	_Lbrace    // {
@@ -39,7 +42,7 @@ const (
 	_Dot       // .
 	_DotDotDot // ...
 
-	// keywords
+	// keywords go保留关键字
 	_Break       // break
 	_Case        // case
 	_Chan        // chan
@@ -121,7 +124,7 @@ const (
 	// precAndAnd
 	AndAnd // &&
 
-	// precCmp
+	// precCmp 比较
 	Eql // ==
 	Neq // !=
 	Lss // <
@@ -146,6 +149,7 @@ const (
 )
 
 // Operator precedences
+//操作符优先级
 const (
 	_ = iota
 	precOrOr

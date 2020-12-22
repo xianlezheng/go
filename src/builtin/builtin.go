@@ -205,12 +205,16 @@ func append(slice []Type, elems ...Type) []Type
 // string to a slice of bytes.) The source and destination may overlap. Copy
 // returns the number of elements copied, which will be the minimum of
 // len(src) and len(dst).
+/*
+	拷贝，从参数中看，只能是拷贝slice类型的数据
+*/
 func copy(dst, src []Type) int
 
 // The delete built-in function deletes the element with the specified key
 // (m[key]) from the map. If m is nil or there is no such element, delete
 // is a no-op.
 /*
+	delete是删除map元素中指定key的元素
 	mp := make(map[int]string)
 	mp[1] = "1"
 	mp[2] = "2"
@@ -231,6 +235,15 @@ func delete(m map[Type]Type1, key Type)
 // For some arguments, such as a string literal or a simple array expression, the
 // result can be a constant. See the Go language specification's "Length and
 // capacity" section for details.
+/*
+	len是取数据的长度，数据类型可以是：
+	1、数组：数组的长度
+	2、指针（pointer to arr）：指针指向数据的长度
+	3、切片或者map：
+	4、字符串（string）：
+	5、管道（channel）
+
+*/
 func len(v Type) int
 
 // The cap built-in function returns the capacity of v, according to its type:

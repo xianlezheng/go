@@ -110,6 +110,9 @@ func (s *source) rewind() {
 	s.nextch()
 }
 
+/**
+从source缓冲中读取下一个字符
+*/
 func (s *source) nextch() {
 redo:
 	s.col += uint(s.chw)
@@ -146,6 +149,7 @@ redo:
 		return
 	}
 
+	// 读取source 缓冲数据，给ch，ch是rune类型（chw代表数据的大小int类型：取值范围1-4）
 	s.ch, s.chw = utf8.DecodeRune(s.buf[s.r:s.e])
 	s.r += s.chw
 

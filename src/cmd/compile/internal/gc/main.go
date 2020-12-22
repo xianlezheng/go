@@ -540,6 +540,7 @@ func Main(archInit func(*Arch)) {
 	loadsys()
 
 	timings.Start("fe", "parse")
+	// 对输入的文件进行词法与语法分析，得到文件对应的抽象语法树
 	lines := parseFiles(flag.Args())
 	timings.Stop()
 	timings.AddEvent(int64(lines), "lines")
@@ -551,7 +552,8 @@ func Main(archInit func(*Arch)) {
 	typecheckok = true
 
 	// Process top-level declarations in phases.
-
+	// 类型检查：
+	// 阶段1、常量，类型，函数名及类型；
 	// Phase 1: const, type, and names and types of funcs.
 	//   This will gather all the information about types
 	//   and methods but doesn't depend on any of it.
@@ -569,6 +571,7 @@ func Main(archInit func(*Arch)) {
 		}
 	}
 
+	// 阶段2、处理变量的赋值
 	// Phase 2: Variable assignments.
 	//   To check interface assignments, depends on phase 1.
 
@@ -581,6 +584,7 @@ func Main(archInit func(*Arch)) {
 		}
 	}
 
+	// 阶段3、对函数体的主体进行类型检查；
 	// Phase 3: Type check function bodies.
 	// Don't use range--typecheck can add closures to xtop.
 	timings.Start("fe", "typecheck", "func")
@@ -612,6 +616,7 @@ func Main(archInit func(*Arch)) {
 		errorexit()
 	}
 
+	// 阶段4、决定如何捕获变量
 	// Phase 4: Decide how to capture closed variables.
 	// This needs to run before escape analysis,
 	// because variables captured by value do not escape.
@@ -630,6 +635,7 @@ func Main(archInit func(*Arch)) {
 		errorexit()
 	}
 
+	// 阶段5：检查内联函数的类型
 	// Phase 5: Inlining
 	timings.Start("fe", "inlining")
 	if Debug_typecheckinl != 0 {
@@ -663,6 +669,7 @@ func Main(archInit func(*Arch)) {
 		})
 	}
 
+	// 阶段6：进行逃逸分析
 	// Phase 6: Escape analysis.
 	// Required for moving heap allocations onto stack,
 	// which in turn is required by the closure implementation,
@@ -682,6 +689,7 @@ func Main(archInit func(*Arch)) {
 		nowritebarrierrecCheck = newNowritebarrierrecChecker()
 	}
 
+	// 阶段7：将闭包主体转换成引用的捕获变量
 	// Phase 7: Transform closure bodies to properly reference captured variables.
 	// This needs to happen before walk, because closures must be transformed
 	// before walk reaches a call of a closure.
@@ -693,6 +701,7 @@ func Main(archInit func(*Arch)) {
 		}
 	}
 
+	// TODO read source code
 	// Prepare for SSA compilation.
 	// This must be before peekitabs, because peekitabs
 	// can trigger function compilation.
@@ -704,6 +713,7 @@ func Main(archInit func(*Arch)) {
 	Curfn = nil
 	peekitabs()
 
+	// 阶段8：编译顶层函数
 	// Phase 8: Compile top level functions.
 	// Don't use range--walk can add functions to xtop.
 	timings.Start("be", "compilefuncs")
@@ -739,6 +749,7 @@ func Main(archInit func(*Arch)) {
 		genDwarfInline = 0
 	}
 
+	// 阶段9：检查外部依赖的声明
 	// Phase 9: Check external declarations.
 	timings.Start("be", "externaldcls")
 	for i, n := range externdcl {

@@ -45,16 +45,22 @@ in C. All of its code is written in terms of it, so the first thing that the gc
 package must do is convert the syntax package's syntax tree to the compiler's
 AST representation. This extra step may be refactored away in the future.
 
+Gc 包包含一个 AST 定义，这个定义是用 c 语言编写的，所有代码都是用它编写的，所以 gc 包必须做的第一件事就是将语法包的语法树转换为编译器的 AST 表示。这个额外的步骤将来可能会被重新分解。
+
 The AST is then type-checked. The first steps are name resolution and type
 inference, which determine which object belongs to which identifier, and what
 type each expression has. Type-checking includes certain extra checks, such as
 "declared and not used" as well as determining whether or not a function
 terminates.
 
+然后对 AST 进行类型检查。第一步是名称解析和类型推断，它们确定哪个对象属于哪个标识符，以及每个表达式具有哪个类型。类型检查包括某些额外的检查，例如“声明的和未使用的” ，以及确定函数是否终止。
+
 Certain transformations are also done on the AST. Some nodes are refined based
 on type information, such as string additions being split from the arithmetic
 addition node type. Some other examples are dead code elimination, function call
 inlining, and escape analysis.
+
+某些转换也在 AST 上完成。有些节点根据类型信息进行了细化，例如将字符串添加从算术加法节点类型中分离出来。其他一些例子包括死码删除分析、函数调用内联和逸出分析。
 
 ### 3. Generic SSA
 
