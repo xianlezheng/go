@@ -298,6 +298,15 @@ func goschedguarded() {
 // It is displayed in stack traces and heap dumps.
 // Reasons should be unique and descriptive.
 // Do not re-use reasons, add new ones.
+/**
+	将当前goroutine置于等待状态并调用unlockf。
+	如果unlockf返回false，则继续执行例行程序。
+	unlockf一定不能访问此G的堆栈，因为它可能在调用gopark和调用unlockf。
+	reason 说明了goroutine已停放的原因。
+	它显示在堆栈跟踪和堆转储中。
+	设置的reason应具有独特性和描述性。
+	不要重复使用相同的原因，请添加新的原因。
+ */
 func gopark(unlockf func(*g, unsafe.Pointer) bool, lock unsafe.Pointer, reason waitReason, traceEv byte, traceskip int) {
 	if reason != waitReasonSleep {
 		checkTimeouts() // timeouts may expire while two goroutines keep the scheduler busy

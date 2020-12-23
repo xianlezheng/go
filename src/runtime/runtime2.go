@@ -339,6 +339,12 @@ type gobuf struct {
 //
 // sudogs are allocated from a special pool. Use acquireSudog and
 // releaseSudog to allocate and free them.
+/**
+	  sudog在等待列表中表示g，例如用于在通道上发送/接收。
+	  sudog是必需的，因为g↔同步对象关系是多对多的。 一个g可以出现在许多等待列表中，
+    因此一个g可能有很多sudog。 并且许多gs可能正在等待同一个同步对象，因此一个对象可能有许多sudog。
+	  sudog是从特殊池中分配的。 使用acquireSudog和releaseSudog分配和释放它们。
+ */
 type sudog struct {
 	// The following fields are protected by the hchan.lock of the
 	// channel this sudog is blocking on. shrinkstack depends on
